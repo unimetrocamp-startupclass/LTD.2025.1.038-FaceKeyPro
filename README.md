@@ -22,7 +22,6 @@ Este script realiza a **detecção e reconhecimento facial em tempo real**. Quan
 Antes de executar o projeto, certifique-se de instalar as dependências:
 
 ```bash
-pip install opencv-python
-pip install face_recognition
-pip install Pillow
-pip install dlib
+pip install opencv-contrib-python
+pip install pillow
+
