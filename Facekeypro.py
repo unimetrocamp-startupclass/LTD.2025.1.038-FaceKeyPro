@@ -7,19 +7,18 @@ import time
 from datetime import datetime
 
 
-
 class Database:
-   
+    """Classe responsável pelo gerenciamento do banco de dados"""
     
-    def _init_(self, db_name="condominio.db"):
-       
+    def __init__(self, db_name="condominio.db"):
+        """Inicializa a conexão com o banco de dados"""
         self.conn = sqlite3.connect(db_name)
         self.cursor = self.conn.cursor()
         self.criar_tabelas()
     
     def criar_tabelas(self):
-        
-        # Tabela de moradores
+        """Cria as tabelas necessárias se não existirem"""
+       
         self.cursor.execute('''
         CREATE TABLE IF NOT EXISTS moradores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +29,7 @@ class Database:
         )
         ''')
         
-        # Tabela de registros de acesso
+        
         self.cursor.execute('''
         CREATE TABLE IF NOT EXISTS acessos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +52,7 @@ class Database:
         return self.cursor.lastrowid
     
     def obter_todos_moradores(self):
-        
+        """Retorna todos os moradores cadastrados"""
         self.cursor.execute('SELECT id, nome, apartamento, bloco, encoding FROM moradores')
         moradores = []
         for row in self.cursor.fetchall():
@@ -69,7 +68,7 @@ class Database:
         return moradores
     
     def registrar_acesso(self, morador_id, autorizado):
-       
+        """Registra uma tentativa de acesso"""
         self.cursor.execute('''
         INSERT INTO acessos (morador_id, autorizado)
         VALUES (?, ?)
@@ -77,14 +76,15 @@ class Database:
         self.conn.commit()
     
     def fechar(self):
-      
+        """Fecha a conexão com o banco de dados"""
         self.conn.close()
 
 
 class ReconhecimentoFacial:
+    """Classe responsável pelo reconhecimento facial"""
     
-    def _init_(self, db):
-        
+    def __init__(self, db):
+        """Inicializa o sistema de reconhecimento facial"""
         self.db = db
         self.moradores = []
         self.nomes = []
@@ -92,15 +92,15 @@ class ReconhecimentoFacial:
         self.carregar_moradores()
     
     def carregar_moradores(self):
-       
+        """Carrega informações dos moradores do banco de dados"""
         self.moradores = self.db.obter_todos_moradores()
         self.nomes = [morador['nome'] for morador in self.moradores]
         self.encodings = [morador['encoding'] for morador in self.moradores]
         print(f"Carregados {len(self.moradores)} moradores do banco de dados")
     
     def cadastrar_novo_morador(self, frame, nome, apartamento, bloco):
-        
-        # Detecta faces na imagem
+        """Cadastra um novo morador usando a imagem atual"""
+       
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         face_locations = face_recognition.face_locations(rgb_frame)
         
@@ -115,10 +115,10 @@ class ReconhecimentoFacial:
         
         face_encoding = face_recognition.face_encodings(rgb_frame, face_locations)[0]
         
-      
+        
         morador_id = self.db.cadastrar_morador(nome, apartamento, bloco, face_encoding)
         
-        
+       
         self.moradores.append({
             'id': morador_id,
             'nome': nome,
@@ -133,8 +133,8 @@ class ReconhecimentoFacial:
         return True
     
     def identificar_pessoa(self, frame):
-       
-       
+        """Identifica uma pessoa na imagem e retorna suas informações"""
+        
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
         
@@ -143,11 +143,11 @@ class ReconhecimentoFacial:
         if not face_locations:
             return None, None
         
-        
+       
         face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
         
         for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-          
+            
             if len(self.encodings) > 0:
                 matches = face_recognition.compare_faces(self.encodings, face_encoding, tolerance=0.6)
                 
@@ -180,10 +180,10 @@ class ReconhecimentoFacial:
 
 
 class ControleAcesso:
+    """Classe principal para controle de acesso ao minimercado"""
     
-    
-    def _init_(self):
-       
+    def __init__(self):
+        """Inicializa o sistema de controle de acesso"""
         self.db = Database()
         self.reconhecimento = ReconhecimentoFacial(self.db)
         self.camera = None
@@ -192,7 +192,7 @@ class ControleAcesso:
         self.tempo_bloqueio = 3  
     
     def iniciar_camera(self, camera_id=0):
-       
+        """Inicia a câmera"""
         self.camera = cv2.VideoCapture(camera_id)
         if not self.camera.isOpened():
             print("Erro ao abrir a câmera!")
@@ -200,12 +200,12 @@ class ControleAcesso:
         return True
     
     def abrir_porta(self):
-       
+        """Simula a abertura da porta"""
         print("\n===== PORTA ABERTA =====")
-        
+       
     
     def executar(self):
-       
+        """Executa o sistema de controle de acesso"""
         if not self.iniciar_camera():
             return
         
@@ -224,26 +224,26 @@ class ControleAcesso:
             frame = cv2.flip(frame, 1)
             
             if self.modo_cadastro:
-              
+                
                 cv2.putText(frame, "MODO CADASTRO", (10, 30), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
                 cv2.putText(frame, "Pressione 's' para salvar", (10, 60), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             else:
-               
+                
                 frame_processado, morador = self.reconhecimento.identificar_pessoa(frame)
                 
                 if frame_processado is not None:
                     frame = frame_processado
                 
-              
+                
                 tempo_atual = time.time()
                 if morador is not None:
                     
                     if (self.ultimo_acesso is None or 
                         tempo_atual - self.ultimo_acesso > self.tempo_bloqueio):
                         
-                       
+                        
                         self.db.registrar_acesso(morador['id'], True)
                         self.abrir_porta()
                         self.ultimo_acesso = tempo_atual
@@ -252,48 +252,48 @@ class ControleAcesso:
                         cv2.putText(frame, "ACESSO AUTORIZADO", (10, 30), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 
-           
+            
             cv2.imshow('Controle de Acesso - Minimercado', frame)
             
-           
+            
             key = cv2.waitKey(1) & 0xFF
             
             if key == ord('q'):
-                
+              
                 break
             
             elif key == ord('c'):
-                
+               
                 self.modo_cadastro = True
                 print("\n--- Modo de Cadastro Ativado ---")
             
             elif key == ord('a'):
-                
+               
                 self.modo_cadastro = False
                 print("\n--- Modo de Acesso Ativado ---")
             
             elif key == ord('s') and self.modo_cadastro:
-                
+               
                 nome = input("Nome do morador: ")
                 bloco = input("Bloco: ")
                 apartamento = input("Apartamento: ")
                 
                 ret, frame_cadastro = self.camera.read()
                 if ret:
-                    frame_cadastro = cv2.flip(frame_cadastro, 1)  #
+                    frame_cadastro = cv2.flip(frame_cadastro, 1)  # Espelha para cadastro
                     if self.reconhecimento.cadastrar_novo_morador(frame_cadastro, nome, apartamento, bloco):
                         print(f"Morador {nome} cadastrado com sucesso!")
                     else:
                         print("Falha ao cadastrar. Tente novamente.")
         
-      
+        
         self.camera.release()
         cv2.destroyAllWindows()
         self.db.fechar()
 
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     try:
         sistema = ControleAcesso()
         sistema.executar()
