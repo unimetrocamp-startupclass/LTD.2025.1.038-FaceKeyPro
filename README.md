@@ -4,11 +4,11 @@ Este projeto é um sistema de controle de acesso baseado em **reconhecimento fac
 
 ## 📸 Funcionalidades
 
-- Reconhecimento facial em tempo real usando a biblioteca `face_recognition`
-- Cadastro de novos moradores com imagem capturada pela câmera
-- Registro de tentativas de acesso com data e hora
-- Banco de dados SQLite local para armazenar moradores e acessos
-- Interface via terminal e exibição de vídeo com `OpenCV`
+- Reconhecimento facial em tempo real com a biblioteca 'face_recognition'
+Cadastro de novos moradores por meio de imagens capturadas pela câmera
+Registro de tentativas de acesso com data e hora
+Banco de dados SQLite local para armazenar informações de moradores e acessos
+Interface via terminal com exibição de vídeo utilizando 'OpenCV'
 
 ## 🧰 Requisitos
 
