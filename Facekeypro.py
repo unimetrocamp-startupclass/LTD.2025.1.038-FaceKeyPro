@@ -255,9 +255,9 @@ class ControleAcesso:
             
             cv2.imshow('Controle de Acesso - Minimercado', frame)
             
-            
-            key = cv2.waitKey(1) & 0xFF
-            
+            # print("Pressione uma tecla: \n")
+            key = cv2.waitKey(100) & 0xFF
+            # print(f"Tecla pressionada: {key}")
             if key == ord('q'):
               
                 break
@@ -273,7 +273,8 @@ class ControleAcesso:
                 print("\n--- Modo de Acesso Ativado ---")
             
             elif key == ord('s') and self.modo_cadastro:
-               
+                cv2.putText(frame, "ISIRA SEUS DADOS ABAIXO:", (10, 30), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 nome = input("Nome do morador: ")
                 bloco = input("Bloco: ")
                 apartamento = input("Apartamento: ")
@@ -283,6 +284,10 @@ class ControleAcesso:
                     frame_cadastro = cv2.flip(frame_cadastro, 1)  # Espelha para cadastro
                     if self.reconhecimento.cadastrar_novo_morador(frame_cadastro, nome, apartamento, bloco):
                         print(f"Morador {nome} cadastrado com sucesso!")
+                        print("\n=== Sistema de Controle de Acesso por Reconhecimento Facial ===")
+                        print("Pressione 'q' para sair")
+                        print("Pressione 'c' para entrar no modo de cadastro")
+                        print("Pressione 'a' para voltar ao modo de acesso")
                     else:
                         print("Falha ao cadastrar. Tente novamente.")
         
