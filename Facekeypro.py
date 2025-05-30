@@ -203,7 +203,10 @@ class ControleAcesso:
         """Simula a abertura da porta"""
         print("\n===== PORTA ABERTA =====")
        
-    
+    def enviar_comando(comando):
+        with open("comando.txt", "w") as f:
+            f.write(comando)
+            
     def executar(self):
         """Executa o sistema de controle de acesso"""
         if not self.iniciar_camera():
@@ -239,7 +242,8 @@ class ControleAcesso:
                 
                 tempo_atual = time.time()
                 if morador is not None:
-                    
+                    with open("comando.txt", "w") as f:
+                        f.write("verde")
                     if (self.ultimo_acesso is None or 
                         tempo_atual - self.ultimo_acesso > self.tempo_bloqueio):
                         
@@ -249,8 +253,12 @@ class ControleAcesso:
                         self.ultimo_acesso = tempo_atual
                         
                         
+                        
                         cv2.putText(frame, "ACESSO AUTORIZADO", (10, 30), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                else:
+                    with open("comando.txt", "w") as f:
+                        f.write("vermelho")
                 
             
             cv2.imshow('Controle de Acesso - Minimercado', frame)
